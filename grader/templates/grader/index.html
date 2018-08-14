@@ -1,0 +1,110 @@
+{% load static %}
+
+<script type="text/javascript" >
+var data = {};
+var arr = [];
+{% for r in notas %}
+	data['archivo']="{{ r.archivo }}";
+	data['nota_tc']={{ r.nota_tc}};
+	data['nota_notapie']={{ r.nota_notapie}};
+	data['nota_letracap']={{ r.nota_letracap}};
+	data['nota_saltos']={{ r.nota_saltos}};
+	data['nota_vinetas']={{ r.nota_vinetas}};
+	data['nota_columnas']={{ r.nota_columnas}};
+	data['nota_piepagina']={{ r.nota_piepagina}};
+	//data['notas_bordes']={{ r.notas_bordes}};
+	//data['notas_formato']={{ r.notas_formato}};
+	arr.push(data)
+{% endfor %}
+
+function getfolder(e) {
+    var files = e.target.files;
+    var path = files[0].webkitRelativePath;
+    var Folder = path.split("/");
+}
+
+function getExcel(){
+	data = {};
+	data['notas'] = arr;
+	$.ajax({
+		beforeSend: function(xhr, settings) {
+			 function getCookie(name) {
+				 var cookieValue = null;
+				 if (document.cookie && document.cookie != '') {
+					 var cookies = document.cookie.split(';');
+					 for (var i = 0; i < cookies.length; i++) {
+						 var cookie = jQuery.trim(cookies[i]);
+						 // Does this cookie string begin with the name we want?
+						 if (cookie.substring(0, name.length + 1) == (name + '=')) {
+							 cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+							 break;
+						 }
+					 }
+				 }
+				 return cookieValue;
+			 }
+			 if (!(/^http:.*/.test(settings.url) || /^https:.*/.test(settings.url))) {
+				 // Only send the token to relative URLs i.e. locally.
+				 xhr.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
+			 }
+		 }, 
+		type: "POST",
+		//url: "{% url 'grader.views.exportar_excel' 9999%}",
+		data: data,
+		dataType: "json",
+		async: true,
+		success: function(reponse) {
+			console.log(response)
+			return response
+		}
+	});
+	
+}
+</script>
+
+<link rel="stylesheet" type="text/css" href="{% static 'grader/bootstrap/css/bootstrap.min.css' %}" />
+<script type="text/javascript" src="{% static 'grader/jquery/js/jquery-3.3.1.min.js' %}"></script>
+<script type="text/javascript" src="{% static 'grader/bootstrap/js/bootstrap.min.js' %}"></script>
+
+<div class="row" style="background-color:#f5f5f5">
+	<div class="col"></div>
+    <div class="col-6">
+		<H2>Calificador Word HCD</h2>
+		<form action='' method='POST' enctype="multipart/form-data">
+		{% csrf_token %}
+		<label>Archivo modelo:</label>
+		<input type="file" name='modelo'/>
+		<br/>
+		<label>Directorio de respuestas:</label>
+		<input type="file" id="flup" name='directorio' onchange="getfolder(event)" webkitdirectory mozdirectory msdirectory odirectory directory multiple />
+		<br/><br/>
+		<input type="submit" value="Calificar" class="btn btn-success" />
+		</form>
+		{% if token %}
+		<a href="{% url 'grader.views.exportar_excel' token %}" style='float:right;' target='_blank'>
+			Descargar Excel
+		</a>
+		<!--<h1 class="text-hide" style="background-image: url({% static 'grader/media/images/excel.png' %}); width: 50px; height: 50px; float:right;">Excel</h1>-->
+		{% endif %}
+	</div>
+	<div class="col"></div>
+</div>
+<br/><br/>
+<div class="row">
+<div class="col-12">
+	<table class="table">
+		<thead>
+		<tr><th>Estudiante</th><th>Tabla de contenido</th><th>Formato</th><th>Bordes</th><th>Nota al pie</th><th>Pie de página</th><th>Letra Capital</th><th>Columnas</th><th>Saltos</th><th>Viñetas</th><th>TOTAL</th></th>
+		</thead>
+		<tbody>
+		{% for r in notas %}
+		<tr>
+			<td>{{ r.archivo }}</td>
+			<td>{{ r.nota_tc}} : {{ r.tot_tc }}</td><td>{{ r.notas_formato}} : {{r.tot_formato}}</td><td>{{ r.notas_bordes}} : {{r.tot_bordes}}</td><td>{{ r.nota_notapie}}</td>
+			<td>{{ r.nota_piepagina}}</td><td>{{ r.nota_letracap}}</td><td>{{ r.nota_columnas}}</td><td>{{ r.nota_saltos}}</td><td>{{ r.nota_vinetas}}</td><td><b> {{ r.total}}</b></td>
+		</tr>
+		{% endfor %}
+		</tbody>
+	</table>
+</div>
+</div>
